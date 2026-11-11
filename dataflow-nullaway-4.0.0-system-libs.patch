@@ -1,0 +1,214 @@
+--- a/dataflow/src/main/java/org/checkerframework/dataflow/util/PurityUtils.java
++++ b/dataflow/src/main/java/org/checkerframework/dataflow/util/PurityUtils.java
+@@ -27,9 +27,22 @@
+     throw new Error("Do not instantiate PurityUtils.");
+   }
+ 
++  /**
++   * Which purity property a method has. Checker Framework 4.4 moved this
++   * enum off the Pure annotation. Presence of Pure, Deterministic, and
++   * SideEffectFree is unchanged.
++   */
++  public static enum Kind {
++    /** The method has no visible side effects. */
++    SIDE_EFFECT_FREE,
++
++    /** The method returns the same value when called in the same environment. */
++    DETERMINISTIC
++  }
++
+   /** Represents a method that is both deterministic and side-effect free. */
+-  private static final EnumSet<Pure.Kind> detAndSeFree =
+-      EnumSet.of(Pure.Kind.DETERMINISTIC, Pure.Kind.SIDE_EFFECT_FREE);
++  private static final EnumSet<Kind> detAndSeFree =
++      EnumSet.of(Kind.DETERMINISTIC, Kind.SIDE_EFFECT_FREE);
+ 
+   /**
+    * Does the method {@code methodTree} have any purity annotation?
+@@ -78,8 +91,8 @@
+    */
+   public static boolean isDeterministic(
+       AnnotationProvider provider, ExecutableElement methodElement) {
+-    EnumSet<Pure.Kind> kinds = getPurityKinds(provider, methodElement);
+-    return kinds.contains(Pure.Kind.DETERMINISTIC);
++    EnumSet<Kind> kinds = getPurityKinds(provider, methodElement);
++    return kinds.contains(Kind.DETERMINISTIC);
+   }
+ 
+   /**
+@@ -95,8 +108,8 @@
+    */
+   public static boolean isSideEffectFree(
+       AnnotationProvider provider, ExecutableElement methodElement) {
+-    EnumSet<Pure.Kind> kinds = getPurityKinds(provider, methodElement);
+-    return kinds.contains(Pure.Kind.SIDE_EFFECT_FREE);
++    EnumSet<Kind> kinds = getPurityKinds(provider, methodElement);
++    return kinds.contains(Kind.SIDE_EFFECT_FREE);
+   }
+ 
+   /**
+@@ -107,7 +120,7 @@
+    * @param methodTree a method to test
+    * @return the types of purity of the method {@code methodTree}
+    */
+-  public static EnumSet<Pure.Kind> getPurityKinds(
++  public static EnumSet<Kind> getPurityKinds(
+       AnnotationProvider provider, MethodTree methodTree) {
+     ExecutableElement methodElement = TreeUtils.elementFromDeclaration(methodTree);
+     if (methodElement == null) {
+@@ -124,7 +137,7 @@
+    * @param methodElement a method to test
+    * @return the types of purity of the method {@code methodElement}
+    */
+-  public static EnumSet<Pure.Kind> getPurityKinds(
++  public static EnumSet<Kind> getPurityKinds(
+       AnnotationProvider provider, ExecutableElement methodElement) {
+     // Special case for record accessors
+     if (ElementUtils.isRecordAccessor(methodElement)
+@@ -140,12 +153,12 @@
+     if (pureAnnotation != null) {
+       return detAndSeFree;
+     }
+-    EnumSet<Pure.Kind> result = EnumSet.noneOf(Pure.Kind.class);
++    EnumSet<Kind> result = EnumSet.noneOf(Kind.class);
+     if (sefAnnotation != null) {
+-      result.add(Pure.Kind.SIDE_EFFECT_FREE);
++      result.add(Kind.SIDE_EFFECT_FREE);
+     }
+     if (detAnnotation != null) {
+-      result.add(Pure.Kind.DETERMINISTIC);
++      result.add(Kind.DETERMINISTIC);
+     }
+     return result;
+   }
+--- a/dataflow/src/main/java/org/checkerframework/dataflow/util/PurityChecker.java
++++ b/dataflow/src/main/java/org/checkerframework/dataflow/util/PurityChecker.java
+@@ -91,14 +91,14 @@
+      * Contains all the varieties of purity that the expression has. Starts out with all varieties,
+      * and elements are removed from it as violations are found.
+      */
+-    protected EnumSet<Pure.Kind> kinds = EnumSet.allOf(Pure.Kind.class);
++    protected EnumSet<PurityUtils.Kind> kinds = EnumSet.allOf(PurityUtils.Kind.class);
+ 
+     /**
+      * Returns the kinds of purity that the method has.
+      *
+      * @return the kinds of purity that the method has
+      */
+-    public EnumSet<Pure.Kind> getKinds() {
++    public EnumSet<PurityUtils.Kind> getKinds() {
+       return kinds;
+     }
+ 
+@@ -108,7 +108,7 @@
+      * @param otherKinds the varieties of purity to check
+      * @return true if the method is pure with respect to all the given kinds
+      */
+-    public boolean isPure(EnumSet<Pure.Kind> otherKinds) {
++    public boolean isPure(EnumSet<PurityUtils.Kind> otherKinds) {
+       return kinds.containsAll(otherKinds);
+     }
+ 
+@@ -129,7 +129,7 @@
+      */
+     public void addNotSEFreeReason(Tree t, String msgId) {
+       notSEFreeReasons.add(IPair.of(t, msgId));
+-      kinds.remove(Pure.Kind.SIDE_EFFECT_FREE);
++      kinds.remove(PurityUtils.Kind.SIDE_EFFECT_FREE);
+     }
+ 
+     /**
+@@ -149,7 +149,7 @@
+      */
+     public void addNotDetReason(Tree t, String msgId) {
+       notDetReasons.add(IPair.of(t, msgId));
+-      kinds.remove(Pure.Kind.DETERMINISTIC);
++      kinds.remove(PurityUtils.Kind.DETERMINISTIC);
+     }
+ 
+     /**
+@@ -169,8 +169,8 @@
+      */
+     public void addNotBothReason(Tree t, String msgId) {
+       notBothReasons.add(IPair.of(t, msgId));
+-      kinds.remove(Pure.Kind.DETERMINISTIC);
+-      kinds.remove(Pure.Kind.SIDE_EFFECT_FREE);
++      kinds.remove(PurityUtils.Kind.DETERMINISTIC);
++      kinds.remove(PurityUtils.Kind.SIDE_EFFECT_FREE);
+     }
+ 
+     @Override
+@@ -245,8 +245,8 @@
+     }
+ 
+     /** Represents a method that is both deterministic and side-effect free. */
+-    private static final EnumSet<Pure.Kind> detAndSeFree =
+-        EnumSet.of(Pure.Kind.DETERMINISTIC, Pure.Kind.SIDE_EFFECT_FREE);
++    private static final EnumSet<PurityUtils.Kind> detAndSeFree =
++        EnumSet.of(PurityUtils.Kind.DETERMINISTIC, PurityUtils.Kind.SIDE_EFFECT_FREE);
+ 
+     @Override
+     public Void visitMethodInvocation(MethodInvocationTree tree, Void ignore) {
+@@ -254,14 +254,14 @@
+       if (!PurityUtils.hasPurityAnnotation(annoProvider, elt)) {
+         purityResult.addNotBothReason(tree, "call");
+       } else {
+-        EnumSet<Pure.Kind> purityKinds =
++        EnumSet<PurityUtils.Kind> purityKinds =
+             ((assumeDeterministic && assumeSideEffectFree)
+                     || (assumePureGetters && ElementUtils.isGetter(elt)))
+                 // Avoid computation if not necessary
+                 ? detAndSeFree
+                 : PurityUtils.getPurityKinds(annoProvider, elt);
+-        boolean det = assumeDeterministic || purityKinds.contains(Pure.Kind.DETERMINISTIC);
+-        boolean seFree = assumeSideEffectFree || purityKinds.contains(Pure.Kind.SIDE_EFFECT_FREE);
++        boolean det = assumeDeterministic || purityKinds.contains(PurityUtils.Kind.DETERMINISTIC);
++        boolean seFree = assumeSideEffectFree || purityKinds.contains(PurityUtils.Kind.SIDE_EFFECT_FREE);
+         if (!det && !seFree) {
+           purityResult.addNotBothReason(tree, "call");
+         } else if (!det) {
+--- a/dataflow/src/main/java/org/checkerframework/dataflow/util/NodeUtils.java
++++ b/dataflow/src/main/java/org/checkerframework/dataflow/util/NodeUtils.java
+@@ -16,7 +16,6 @@
+ import org.checkerframework.dataflow.cfg.node.TypeCastNode;
+ import org.checkerframework.javacutil.ElementUtils;
+ import org.checkerframework.javacutil.TypesUtils;
+-import org.plumelib.util.CollectionsPlume;
+ 
+ /** A utility class to operate on a given {@link Node}. */
+ public class NodeUtils {
+@@ -100,8 +99,12 @@
+       return false;
+     }
+     ExecutableElement invoked = ((MethodInvocationNode) node).getTarget().getMethod();
+-    return CollectionsPlume.anyMatch(
+-        methods, method -> ElementUtils.isMethod(invoked, method, env));
++    for (ExecutableElement method : methods) {
++      if (ElementUtils.isMethod(invoked, method, env)) {
++        return true;
++      }
++    }
++    return false;
+   }
+ 
+   /**
+--- a/dataflow/src/main/java/org/checkerframework/dataflow/constantpropagation/ConstantPropagationStore.java
++++ b/dataflow/src/main/java/org/checkerframework/dataflow/constantpropagation/ConstantPropagationStore.java
+@@ -10,7 +10,7 @@
+ import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
+ import org.checkerframework.dataflow.expression.JavaExpression;
+ import org.plumelib.util.ArrayMap;
+-import org.plumelib.util.MapsP;
++import org.plumelib.util.CollectionsPlume;
+ 
+ /** A store that records information about constant values. */
+ public class ConstantPropagationStore implements Store<ConstantPropagationStore> {
+@@ -148,7 +148,7 @@
+   public String toString() {
+     // Only output local variable information.
+     // This output is very terse, so a CFG containing it fits well in the manual.
+-    Map<Node, Constant> contentsLocalVars = new LinkedHashMap<>(MapsP.mapCapacity(contents));
++    Map<Node, Constant> contentsLocalVars = new LinkedHashMap<>(CollectionsPlume.mapCapacity(contents));
+     for (Map.Entry<Node, Constant> e : contents.entrySet()) {
+       if (e.getKey() instanceof LocalVariableNode) {
+         contentsLocalVars.put(e.getKey(), e.getValue());
