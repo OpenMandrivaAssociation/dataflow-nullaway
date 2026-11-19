@@ -34,7 +34,7 @@ BuildRequires:	mvn(org.plumelib:hashmap-util) = 2.0.0
 BuildRequires:	mvn(org.plumelib:hashmap-util) = 0.0.1
 BuildRequires:	mvn(org.plumelib:javac-parse) = 1.0.0
 BuildRequires:	mvn(org.plumelib:javac-parse) = 0.9.0
-BuildRequires:	mvn(com.google.guava:guava) = 33.6.0-jre
+BuildRequires:	mvn(com.google.guava:guava) = 33.8.0-jre
 Requires:	mvn(org.checkerframework:checker-qual) = 4.4.0
 Requires:	mvn(org.plumelib:plume-util) = 2.0.0
 Requires:	mvn(org.plumelib:plume-util) = 1.8.1
@@ -44,7 +44,7 @@ Requires:	mvn(org.plumelib:hashmap-util) = 2.0.0
 Requires:	mvn(org.plumelib:hashmap-util) = 0.0.1
 Requires:	mvn(org.plumelib:javac-parse) = 1.0.0
 Requires:	mvn(org.plumelib:javac-parse) = 0.9.0
-Requires:	mvn(com.google.guava:guava) = 33.6.0-jre
+Requires:	mvn(com.google.guava:guava) = 33.8.0-jre
 
 %description
 org.checkerframework:dataflow-nullaway %{version}. NullAway calls the
@@ -183,7 +183,7 @@ build_tree() {
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.6.0-jre</version>
+      <version>33.8.0-jre</version>
     </dependency>
   </dependencies>
 </project>
@@ -236,7 +236,7 @@ END
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.6.0-jre</version>
+      <version>33.8.0-jre</version>
     </dependency>
   </dependencies>
 </project>
